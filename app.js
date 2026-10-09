@@ -678,7 +678,7 @@ function renderModelPicker() {
   const tabs = families
     .map((candidate) => {
       const active = candidate.id === family.id;
-      return `<button type="button" role="tab" id="family-tab-${escape(candidate.id)}" data-family="${escape(candidate.id)}" aria-selected="${active}" aria-controls="model-family-panel" tabindex="${active ? 0 : -1}">${escape(candidate.id.toUpperCase())}</button>`;
+      return `<button type="button" role="tab" id="family-tab-${escape(candidate.id)}" data-family="${escape(candidate.id)}" aria-selected="${active}" aria-controls="model-family-panel" tabindex="${active ? 0 : -1}">${escape(candidate.tabLabel || candidate.id.toUpperCase())}</button>`;
     })
     .join("");
   const choices = familyModels

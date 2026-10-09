@@ -1,5 +1,5 @@
 const PREFIX = `car-inspection-static-${encodeURIComponent(new URL(self.registration.scope).pathname)}-`;
-const CACHE = `${PREFIX}v11`;
+const CACHE = `${PREFIX}v12`;
 const localAssets = [
   "./",
   "./index.html",
@@ -8,6 +8,7 @@ const localAssets = [
   "./data/models/n90.js",
   "./data/models/su7.js",
   "./data/models/yu7.js",
+  "./data/models/su7-ultra.js",
   "./data/catalog.js",
   "./app.js",
   "./manifest.webmanifest",
