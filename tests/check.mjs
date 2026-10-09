@@ -7,6 +7,8 @@ const dataPaths = [
   "data/common.js",
   "data/models/n70.js",
   "data/models/n90.js",
+  "data/models/su7.js",
+  "data/models/yu7.js",
   "data/catalog.js",
 ];
 const dataScript = (
@@ -110,7 +112,20 @@ JSON.parse(
 new vm.Script(await readFile(new URL("../sw.js", import.meta.url), "utf8"));
 assert.deepEqual(
   Array.from(context.check.models, (model) => model.id),
-  ["n70-pro", "n70-max", "n90-max", "n90-max-expedition"],
+  [
+    "n70-pro",
+    "n70-max",
+    "n90-max",
+    "n90-max-expedition",
+    "su7",
+    "su7-pro",
+    "su7-max",
+    "yu7-standard",
+    "yu7-long-range",
+    "yu7-pro",
+    "yu7-max",
+    "yu7-gt",
+  ],
 );
 for (const model of context.check.models.filter(
   (model) => model.familyId === "n70",
@@ -179,6 +194,92 @@ for (const model of context.check.models.filter(
   assert.ok(modelReport.includes(model.name));
   assert.equal(modelReport.includes("电动升降顶舱"), model.expedition);
   assert.equal(modelReport.includes("第三排座椅与乘坐设施"), !model.expedition);
+}
+for (const model of context.check.models.filter(
+  (model) => model.familyId === "su7",
+)) {
+  const resolved = context.check.checklistFor(model.id);
+  const items = resolved.flatMap((category) => category.items);
+  assert.equal(new Set(items.map((item) => item.id)).size, items.length);
+  for (const item of allItems)
+    assert.ok(items.some((active) => active.id === item.id));
+  assert.ok(!items.some((item) => /^(n70|n90)-/.test(item.id)));
+  assert.equal(
+    items.some((item) => item.id === "su7-air-height"),
+    model.air,
+  );
+  assert.equal(
+    items.some((item) => item.id === "su7-spoiler"),
+    model.spoiler !== "none",
+  );
+  assert.equal(
+    items.some((item) => item.id === "su7-dimming-roof"),
+    model.premium,
+  );
+  assert.ok(
+    resolved.findIndex((category) => category.id === "su7") <
+      resolved.findIndex((category) => category.id === "c10"),
+  );
+  const current = freshInspection(model.id);
+  assert.equal(Object.keys(current.records).length, items.length);
+  const modelReport = JSON.stringify(
+    await buildReportDefinition({ inspection: current, photos: [] }),
+  );
+  assert.ok(modelReport.includes(model.name));
+  assert.ok(modelReport.includes(model.battery));
+  assert.equal(modelReport.includes("双分区智能调光天幕"), model.premium);
+}
+for (const model of context.check.models.filter(
+  (model) => model.familyId === "yu7",
+)) {
+  const resolved = context.check.checklistFor(model.id);
+  const items = resolved.flatMap((category) => category.items);
+  assert.equal(new Set(items.map((item) => item.id)).size, items.length);
+  for (const item of allItems)
+    assert.ok(items.some((active) => active.id === item.id));
+  assert.ok(!items.some((item) => /^(n70|n90|su7)-/.test(item.id)));
+  assert.equal(
+    items.some((item) => item.id === "yu7-air-height"),
+    model.air,
+  );
+  assert.equal(
+    items.some((item) => item.id === "yu7-dimming-roof"),
+    model.premium,
+  );
+  assert.equal(
+    items.some((item) => item.id === "yu7-fridge"),
+    model.fridge,
+  );
+  assert.equal(
+    items.some((item) => item.id === "yu7-front-massage"),
+    !model.standard,
+  );
+  assert.ok(items.some((item) => item.id === "yu7-damping"));
+  for (const id of [
+    "rear-comfort",
+    "carbon-brakes",
+    "elsd",
+    "camera-cleaning",
+    "active-diffuser",
+    "gt-order",
+  ])
+    assert.equal(
+      items.some((item) => item.id === `yu7-${id}`),
+      model.gt,
+    );
+  assert.ok(
+    resolved.findIndex((category) => category.id === "yu7") <
+      resolved.findIndex((category) => category.id === "c10"),
+  );
+  const current = freshInspection(model.id);
+  assert.equal(Object.keys(current.records).length, items.length);
+  const modelReport = JSON.stringify(
+    await buildReportDefinition({ inspection: current, photos: [] }),
+  );
+  assert.ok(modelReport.includes(model.name));
+  assert.ok(modelReport.includes(model.battery));
+  assert.equal(modelReport.includes("GT 尾部主动扩散器"), model.gt);
+  assert.equal(modelReport.includes("智能调光天幕"), model.premium);
 }
 assert.equal(
   context.check.checklistFor("unknown").flatMap((category) => category.items)
