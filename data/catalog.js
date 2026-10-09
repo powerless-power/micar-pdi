@@ -24,7 +24,10 @@ globalThis.MiCarData = (() => {
             }),
         }));
         const additions = family?.categoriesFor?.(model) || [];
-        return [...categories, ...additions.map(category => ({ ...category, items: category.items.map(item => ({ ...item })) }))];
+        const specificCategories = additions.map(category => ({ ...category, items: category.items.map(item => ({ ...item })) }));
+        const documentsIndex = categories.findIndex(category => category.id === 'c10');
+        categories.splice(documentsIndex < 0 ? categories.length : documentsIndex, 0, ...specificCategories);
+        return categories;
     }
 
     for (const model of models) {

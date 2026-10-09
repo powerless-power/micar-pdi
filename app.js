@@ -659,8 +659,11 @@ function persist() {
 function header() {
   return `<header class="app-header"><a href="#/" class="brand">${icon("car-front")}<span>MiCar PDI</span></a><div class="header-right"><span id="saved-state" role="status">${savedLabel()}</span><button id="retry-save" class="icon-button" aria-label="重试保存" title="重试保存" ${saveFailed ? "" : "hidden"}>${icon("rotate-ccw")}</button><button class="icon-button" data-action="help" aria-label="安装与数据说明" title="安装与数据说明">${icon("shield-check")}</button></div></header><div class="notice" id="connection" ${!offlineReady && navigator.onLine ? "hidden" : ""}>${icon(navigator.onLine ? "check-check" : "wifi-off")}<span>${navigator.onLine ? "离线内容已就绪" : offlineReady ? "离线中 · 可继续检查" : "离线中 · 以已缓存内容为准"}</span></div><div class="update-notice" id="update-notice" ${updateAvailable ? "" : "hidden"}><span>新版本已就绪</span><button data-action="update">保存后更新</button></div><div id="error" class="error-banner" role="alert" hidden></div>`;
 }
+function toolDisclaimer() {
+  return '<p class="tool-disclaimer">MiCar PDI 是非官方的个人验车记录工具，并非小米汽车官方应用。检查记录仅供参考，不替代官方交付检查或专业检测。</p>';
+}
 function renderModelPicker() {
-  root.innerHTML = `${header()}<main class="page model-page"><span class="eyebrow">小米汽车交付检查</span><h1 tabindex="-1">选择车型</h1><form id="model-form"><fieldset class="model-choices"><legend>交付版本</legend>${models.map((model) => `<label class="model-choice"><input type="radio" name="modelId" value="${escape(model.id)}" required ${inspection.modelId === model.id ? "checked" : ""}><span><strong>${escape(model.name)}</strong><small>${escape(model.summary)}</small><small>${escape(model.detail)}</small></span></label>`).join("")}</fieldset>${!inspection.modelId && (photos.length || Object.values(inspection.records).some((record) => record.status !== "pending" || record.note)) ? '<p class="field-hint">已有验车记录将保留，请确认它属于所选车型。</p>' : ""}<div class="model-actions"><button class="primary-button" type="submit">${icon("arrow-right")}${inspection.modelId ? "确认车型" : "开始验车"}</button>${inspection.modelId ? '<button class="secondary-button" type="button" data-action="cancel-model">取消</button>' : ""}</div></form></main>`;
+  root.innerHTML = `${header()}<main class="page model-page"><span class="eyebrow">小米汽车交付检查</span><h1 tabindex="-1">选择车型</h1>${toolDisclaimer()}<form id="model-form"><fieldset class="model-choices"><legend>交付版本</legend>${models.map((model) => `<label class="model-choice"><input type="radio" name="modelId" value="${escape(model.id)}" required ${inspection.modelId === model.id ? "checked" : ""}><span><strong>${escape(model.name)}</strong><small>${escape(model.summary)}</small><small>${escape(model.detail)}</small></span></label>`).join("")}</fieldset>${!inspection.modelId && (photos.length || Object.values(inspection.records).some((record) => record.status !== "pending" || record.note)) ? '<p class="field-hint">已有验车记录将保留，请确认它属于所选车型。</p>' : ""}<div class="model-actions"><button class="primary-button" type="submit">${icon("arrow-right")}${inspection.modelId ? "确认车型" : "开始验车"}</button>${inspection.modelId ? '<button class="secondary-button" type="button" data-action="cancel-model">取消</button>' : ""}</div></form></main>`;
 }
 function installInspection(next, clearPhotos = false) {
   inspection = next;
@@ -673,7 +676,12 @@ function installInspection(next, clearPhotos = false) {
   search = "";
   expanded.clear();
   expanded.add("c1");
-  if (next.modelId) expanded.add(categories.at(-1).id);
+  if (next.modelId) {
+    for (const category of categories) {
+      if (!commonCategories.some((common) => common.id === category.id))
+        expanded.add(category.id);
+    }
+  }
   listPosition = 0;
   invalidatePdf();
   location.hash = "/";
@@ -805,7 +813,7 @@ function listContent() {
 }
 function renderList(issues = false) {
   if (issues) filter = "issue";
-  root.innerHTML = `${header()}<main class="page list-page">${issues ? '<div class="page-title"><span class="eyebrow">交付现场记录</span><h1>异常记录</h1></div>' : `${metadata()}${progressSummary()}`}<section class="list-tools"><div class="segmented filters" aria-label="筛选检查项">${["all", "pending", "issue"].map((value) => `<button data-filter="${value}" aria-pressed="${filter === value}">${{ all: "全部", pending: "未检查", issue: "异常" }[value]}</button>`).join("")}</div><label class="search-box">${icon("search")}<span class="sr-only">搜索检查项目和备注</span><input id="search" type="search" placeholder="搜索项目或备注" value="${escape(search)}" autocomplete="off"></label></section><div id="checklist">${listContent()}</div></main>${bottomNav(issues ? "issue" : "list")}`;
+  root.innerHTML = `${header()}<main class="page list-page">${issues ? '<div class="page-title"><span class="eyebrow">交付现场记录</span><h1>异常记录</h1></div>' : `${toolDisclaimer()}${metadata()}${progressSummary()}`}<section class="list-tools"><div class="segmented filters" aria-label="筛选检查项">${["all", "pending", "issue"].map((value) => `<button data-filter="${value}" aria-pressed="${filter === value}">${{ all: "全部", pending: "未检查", issue: "异常" }[value]}</button>`).join("")}</div><label class="search-box">${icon("search")}<span class="sr-only">搜索检查项目和备注</span><input id="search" type="search" placeholder="搜索项目或备注" value="${escape(search)}" autocomplete="off"></label></section><div id="checklist">${listContent()}</div></main>${bottomNav(issues ? "issue" : "list")}`;
 }
 function renderDetail(itemId) {
   const item = allItems.find((candidate) => candidate.id === itemId);
