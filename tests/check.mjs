@@ -3,7 +3,12 @@ import { readFile, access } from "node:fs/promises";
 import vm from "node:vm";
 
 const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
-const dataPaths = ["data/common.js", "data/models/n70.js", "data/catalog.js"];
+const dataPaths = [
+  "data/common.js",
+  "data/models/n70.js",
+  "data/models/n90.js",
+  "data/catalog.js",
+];
 const dataScript = (
   await Promise.all(
     dataPaths.map((path) =>
@@ -105,9 +110,11 @@ JSON.parse(
 new vm.Script(await readFile(new URL("../sw.js", import.meta.url), "utf8"));
 assert.deepEqual(
   Array.from(context.check.models, (model) => model.id),
-  ["n70-pro", "n70-max"],
+  ["n70-pro", "n70-max", "n90-max", "n90-max-expedition"],
 );
-for (const model of context.check.models) {
+for (const model of context.check.models.filter(
+  (model) => model.familyId === "n70",
+)) {
   const items = context.check
     .checklistFor(model.id)
     .flatMap((category) => category.items);
@@ -134,6 +141,44 @@ for (const model of context.check.models) {
     assert.ok(!modelReport.includes(forbidden));
   for (const record of Object.values(current.records)) record.status = "na";
   assert.equal(progress(current.records, items).applicable, 0);
+}
+for (const model of context.check.models.filter(
+  (model) => model.familyId === "n90",
+)) {
+  const resolved = context.check.checklistFor(model.id);
+  const items = resolved.flatMap((category) => category.items);
+  assert.equal(new Set(items.map((item) => item.id)).size, items.length);
+  for (const item of allItems)
+    assert.ok(items.some((active) => active.id === item.id));
+  assert.ok(!items.some((item) => item.id.startsWith("n70-")));
+  assert.ok(items.some((item) => item.id === "n90-air-height"));
+  assert.equal(
+    items.some((item) => item.id === "n90-third-row"),
+    !model.expedition,
+  );
+  for (const id of [
+    "roof-lift",
+    "sofa-bed",
+    "floor-heat",
+    "living-space",
+    "projector",
+  ])
+    assert.equal(
+      items.some((item) => item.id === `n90-${id}`),
+      model.expedition,
+    );
+  assert.ok(
+    resolved.findIndex((category) => category.id === "n90") <
+      resolved.findIndex((category) => category.id === "c10"),
+  );
+  const current = freshInspection(model.id);
+  assert.equal(Object.keys(current.records).length, items.length);
+  const modelReport = JSON.stringify(
+    await buildReportDefinition({ inspection: current, photos: [] }),
+  );
+  assert.ok(modelReport.includes(model.name));
+  assert.equal(modelReport.includes("电动升降顶舱"), model.expedition);
+  assert.equal(modelReport.includes("第三排座椅与乘坐设施"), !model.expedition);
 }
 assert.equal(
   context.check.checklistFor("unknown").flatMap((category) => category.items)

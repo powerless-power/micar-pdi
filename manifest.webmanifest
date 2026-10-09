@@ -2,7 +2,7 @@
 	"id": "./",
 	"name": "MiCar PDI",
 	"short_name": "MiCar PDI",
-	"description": "小米澎程 N70 Pro / Max 离线交付检查与照片报告",
+	"description": "小米澎程 N70 / N90 系列离线交付检查与照片报告",
 	"lang": "zh-CN",
 	"start_url": "./",
 	"scope": "./",
