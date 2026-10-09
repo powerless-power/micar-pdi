@@ -1,4 +1,4 @@
-const { commonCategories, models, modelFor, checklistFor } =
+const { commonCategories, families, models, modelFor, checklistFor } =
   globalThis.MiCarData;
 function vehicleLabel(inspection) {
   return (
@@ -581,6 +581,8 @@ let photoBusy = false;
 let exporting = false;
 let modelBusy = false;
 let choosingModel = false;
+let pickerFamilyId;
+const pickerDrafts = new Map();
 let offlineReady = false;
 let updateAvailable = false;
 let listPosition = 0;
@@ -663,13 +665,51 @@ function toolDisclaimer() {
   return '<p class="tool-disclaimer">MiCar PDI 是非官方的个人验车记录工具，并非小米汽车官方应用。检查记录仅供参考，不替代官方交付检查或专业检测。</p>';
 }
 function renderModelPicker() {
-  root.innerHTML = `${header()}<main class="page model-page"><span class="eyebrow">小米汽车交付检查</span><h1 tabindex="-1">选择车型</h1>${toolDisclaimer()}<form id="model-form"><fieldset class="model-choices"><legend>交付版本</legend>${models.map((model) => `<label class="model-choice"><input type="radio" name="modelId" value="${escape(model.id)}" required ${inspection.modelId === model.id ? "checked" : ""}><span><strong>${escape(model.name)}</strong><small>${escape(model.summary)}</small><small>${escape(model.detail)}</small></span></label>`).join("")}</fieldset>${!inspection.modelId && (photos.length || Object.values(inspection.records).some((record) => record.status !== "pending" || record.note)) ? '<p class="field-hint">已有验车记录将保留，请确认它属于所选车型。</p>' : ""}<div class="model-actions"><button class="primary-button" type="submit">${icon("arrow-right")}${inspection.modelId ? "确认车型" : "开始验车"}</button>${inspection.modelId ? '<button class="secondary-button" type="button" data-action="cancel-model">取消</button>' : ""}</div></form></main>`;
+  const currentModel = modelFor(inspection.modelId);
+  const family =
+    families.find((candidate) => candidate.id === pickerFamilyId) ||
+    families.find((candidate) => candidate.id === currentModel?.familyId) ||
+    families[0];
+  pickerFamilyId = family.id;
+  const familyModels = models.filter((model) => model.familyId === family.id);
+  const selectedModelId =
+    pickerDrafts.get(family.id) ??
+    (currentModel?.familyId === family.id ? currentModel.id : "");
+  const tabs = families
+    .map((candidate) => {
+      const active = candidate.id === family.id;
+      return `<button type="button" role="tab" id="family-tab-${escape(candidate.id)}" data-family="${escape(candidate.id)}" aria-selected="${active}" aria-controls="model-family-panel" tabindex="${active ? 0 : -1}">${escape(candidate.id.toUpperCase())}</button>`;
+    })
+    .join("");
+  const choices = familyModels
+    .map(
+      (model) =>
+        `<label class="model-choice"><input type="radio" name="modelId" value="${escape(model.id)}" required ${selectedModelId === model.id ? "checked" : ""}><span><strong>${escape(model.name)}</strong><small>${escape(model.summary)}</small><small>${escape(model.detail)}</small></span></label>`,
+    )
+    .join("");
+  root.innerHTML = `${header()}<main class="page model-page"><span class="eyebrow">小米汽车交付检查</span><h1 tabindex="-1">选择车型</h1>${toolDisclaimer()}<div class="family-tabs" role="tablist" aria-label="车型系列">${tabs}</div><form id="model-form"><div role="tabpanel" id="model-family-panel" aria-labelledby="family-tab-${escape(family.id)}"><fieldset class="model-choices"><legend>${escape(family.name)} · 交付版本</legend>${choices}</fieldset></div>${!inspection.modelId && (photos.length || Object.values(inspection.records).some((record) => record.status !== "pending" || record.note)) ? '<p class="field-hint">已有验车记录将保留，请确认它属于所选车型。</p>' : ""}<div class="model-actions"><button class="primary-button" type="submit">${icon("arrow-right")}${inspection.modelId ? "确认车型" : "开始验车"}</button>${inspection.modelId ? '<button class="secondary-button" type="button" data-action="cancel-model">取消</button>' : ""}</div></form></main>`;
+}
+function selectPickerFamily(familyId) {
+  if (
+    modelBusy ||
+    photoBusy ||
+    exporting ||
+    !families.some((family) => family.id === familyId)
+  )
+    return;
+  pickerFamilyId = familyId;
+  render();
+  document
+    .getElementById(`family-tab-${familyId}`)
+    ?.focus({ preventScroll: true });
 }
 function installInspection(next, clearPhotos = false) {
   inspection = next;
   activateChecklist(next.modelId);
   if (clearPhotos) photos = [];
   choosingModel = false;
+  pickerFamilyId = modelFor(next.modelId)?.familyId;
+  pickerDrafts.clear();
   saveRevision = savedRevision = 0;
   saveFailed = false;
   filter = "all";
@@ -1052,7 +1092,27 @@ root.addEventListener("input", (event) => {
 root.addEventListener("change", (event) => {
   const input = event.target;
   if (exporting || modelBusy) return;
+  if (input.name === "modelId" && input.checked) {
+    const model = modelFor(input.value);
+    if (model) pickerDrafts.set(model.familyId, model.id);
+  }
   if (input.type === "file" && input.dataset.photoItem) void addPhotos(input);
+});
+root.addEventListener("keydown", (event) => {
+  const tab = event.target.closest('[role="tab"][data-family]');
+  if (!tab || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key))
+    return;
+  event.preventDefault();
+  const tabs = Array.from(root.querySelectorAll('[role="tab"][data-family]'));
+  const index = tabs.indexOf(tab);
+  const nextIndex =
+    event.key === "Home"
+      ? 0
+      : event.key === "End"
+        ? tabs.length - 1
+        : (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) %
+          tabs.length;
+  selectPickerFamily(tabs[nextIndex].dataset.family);
 });
 root.addEventListener("submit", (event) => {
   if (event.target.id !== "model-form") return;
@@ -1064,6 +1124,10 @@ root.addEventListener("click", async (event) => {
   if (!target) return;
   if (exporting || modelBusy) {
     event.preventDefault();
+    return;
+  }
+  if (target.dataset.family) {
+    selectPickerFamily(target.dataset.family);
     return;
   }
   if (target.matches('a[href^="#/item/"]') && !route().startsWith("/item/"))
@@ -1129,11 +1193,15 @@ root.addEventListener("click", async (event) => {
         break;
       }
       choosingModel = true;
+      pickerFamilyId = modelFor(inspection.modelId)?.familyId;
+      pickerDrafts.clear();
       render();
       document.querySelector(".model-page h1")?.focus();
       break;
     case "cancel-model":
       choosingModel = false;
+      pickerFamilyId = modelFor(inspection.modelId)?.familyId;
+      pickerDrafts.clear();
       location.hash = "/";
       render();
       bindCategoryToggles();

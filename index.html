@@ -186,6 +186,37 @@
             padding: 28px var(--gutter) calc(112px + env(safe-area-inset-bottom));
         }
 
+        .family-tabs {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: minmax(64px, 1fr);
+            overflow-x: auto;
+            gap: 8px;
+            padding: 4px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .family-tabs button {
+            min-height: 48px;
+            padding: 8px 12px;
+            font-weight: 600;
+            color: var(--muted);
+            border-bottom: 3px solid transparent;
+        }
+
+        .family-tabs button:hover {
+            background: var(--green-soft);
+        }
+
+        .family-tabs button[aria-selected=true] {
+            color: var(--green);
+            border-bottom-color: var(--green);
+        }
+
+        .family-tabs button:focus-visible {
+            outline-offset: -3px;
+        }
+
         .model-choices {
             padding: 0;
             margin: 24px 0;
