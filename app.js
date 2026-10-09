@@ -906,7 +906,7 @@ function confirmAction(title, message, confirmText) {
 function showHelp() {
   dialog(
     "安装与数据",
-    `<section class="help-section"><h3>添加到 iPhone 主屏幕</h3><p>在 Safari 打开本站，点分享，再选择“添加到主屏幕”。首次联网打开并等待“离线内容已就绪”后，可以离线使用。</p></section><section class="help-section"><h3>仅保存在本机</h3><p>状态、备注和照片自动保存到当前浏览器。请等“已保存至本机”后刷新。请勿使用无痕浏览或清除网站数据。</p><p>Safari 与主屏幕应用的数据可能不共享。建议从主屏幕开始验车，结束后导出 PDF。换域名、换设备不会自动转移记录。</p></section><section class="help-section"><h3>安全检查</h3><p>本清单不是专业检测结论。车辆保持静止；不拆盖板、不触碰高压部件、不钻车底，需要演示的项目请交付人员协助。</p></section>`,
+    `<section class="help-section"><h3>手机与电脑浏览器</h3><p>可在支持所需功能的现代手机或桌面浏览器中使用，如 Chrome、Edge、Safari、Firefox。需要启用 JavaScript 并允许本机存储，建议通过 HTTPS 地址打开。</p></section><section class="help-section"><h3>安装与离线（可选）</h3><p>Android：支持安装的浏览器菜单中可选择“安装应用”或“添加到主屏幕”。iPhone / iPad：在 Safari 的分享菜单中选择“添加到主屏幕”。电脑：支持安装的浏览器地址栏或菜单中可提供安装选项。具体名称因浏览器而异；没有安装选项也可直接在浏览器使用。</p><p>首次联网打开 HTTPS 网站，等待“离线内容已就绪”后可在同一浏览器或已安装应用中离线使用。本地 HTML 预览不启用离线缓存。</p></section><section class="help-section"><h3>仅保存在本机</h3><p>状态、备注和照片自动保存到当前浏览器。请等“已保存至本机”后刷新。请勿使用无痕浏览或清除网站数据。</p><p>不同浏览器、用户配置与已安装应用的数据可能不共享。请保持使用同一入口，结束后导出 PDF；换域名或设备不会自动转移记录。</p></section><section class="help-section"><h3>保存 PDF</h3><p>支持文件分享的浏览器可调用系统分享；否则使用“下载 PDF”保存报告。手机拍照与图片格式支持也取决于设备和浏览器，无法拍照时可从相册或文件选择照片。</p></section><section class="help-section"><h3>安全检查</h3><p>本清单不是专业检测结论。车辆保持静止；不拆盖板、不触碰高压部件、不钻车底，需要演示的项目请交付人员协助。</p></section>`,
     '<button class="primary-button" value="close">知道了</button>',
   );
   void requestPersistence();
