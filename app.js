@@ -662,7 +662,7 @@ function header() {
   return `<header class="app-header"><a href="#/" class="brand">${icon("car-front")}<span>MiCar PDI</span></a><div class="header-right"><span id="saved-state" role="status">${savedLabel()}</span><button id="retry-save" class="icon-button" aria-label="重试保存" title="重试保存" ${saveFailed ? "" : "hidden"}>${icon("rotate-ccw")}</button><button class="icon-button" data-action="help" aria-label="安装与数据说明" title="安装与数据说明">${icon("shield-check")}</button></div></header><div class="notice" id="connection" ${!offlineReady && navigator.onLine ? "hidden" : ""}>${icon(navigator.onLine ? "check-check" : "wifi-off")}<span>${navigator.onLine ? "离线内容已就绪" : offlineReady ? "离线中 · 可继续检查" : "离线中 · 以已缓存内容为准"}</span></div><div class="update-notice" id="update-notice" ${updateAvailable ? "" : "hidden"}><span>新版本已就绪</span><button data-action="update">保存后更新</button></div><div id="error" class="error-banner" role="alert" hidden></div>`;
 }
 function toolDisclaimer() {
-  return '<p class="tool-disclaimer">MiCar PDI 是非官方的个人验车记录工具，并非小米汽车官方应用。检查记录仅供参考，不替代官方交付检查或专业检测。</p>';
+  return '<p class="tool-disclaimer">MiCar PDI 是非官方的个人验车记录工具，并非小米汽车官方应用。检查记录仅供参考，不替代官方交付检查或专业检测。车辆实际配置可能随着时间或地区有所不同，请以实际车辆为准。</p>';
 }
 function renderModelPicker() {
   const currentModel = modelFor(inspection.modelId);
